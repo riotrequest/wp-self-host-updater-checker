@@ -22,6 +22,6 @@ A lightweight PHP solution for self-hosting WordPress plugin and theme updates. 
 3. Configure the script to point to your self-hosted update server.
 
 ## Coming Soon
-	•	Detailed setup instructions.
-	•	Support for MU-Plugins.
-	•	License validation for premium plugins/themes.
+- Detailed setup instructions.
+- Support for MU-Plugins.
+- License validation for premium plugins/themes.
