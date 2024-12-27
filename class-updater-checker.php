@@ -194,13 +194,13 @@ class Updater_Checker {
 	public function fetch_update_metadata() {
 		$data_from_server = \get_transient( $this->cache_key );
 
-		$force_update = \sanitize_text_field( $_GET['force-check'] ) ?? null;
+		$force_update = \sanitize_text_field( $_GET['force-check'] ?? '' );
 		if ( $force_update === '1' && $this->already_forced === false ) {
-			$data_from_server = null;
+			$data_from_server = false;
 			$this->already_forced = true;
 		}
 
-		if ( $data_from_server === null ) {
+		if ( $data_from_server === false ) {
 			$response = \wp_remote_get(
 				$this->repository_url,
 				array(
@@ -358,7 +358,7 @@ class Updater_Checker {
 				$this->github_username,
 				$this->github_repository,
 			),
-			\REPOSITORY_BASE_URL
+			self::REPOSITORY_BASE_URL
 		);
 	}
 
