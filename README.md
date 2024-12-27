@@ -10,19 +10,19 @@ A lightweight PHP solution designed to work with the [WP Self-Host Updater Gener
 
 ## How to use
 
-1. Clone this repository or download the PHP file.
-2. Include the PHP file in your WordPress plugin or theme.
+1. Get the file `class-updater-checker.php` from this repository.
+2. Include the PHP file in your WordPress plugin.
 3. Init the class like the example below.
 
 ```php
-require_once __DIR__ . '/path/to/class-updater-checker.php';
+require_once __DIR__ . '/path/to/class-updater-checker.php'; // Use your path to file
 
-use Use\Your\Namespace\Updater_Checker;
+use Use\Your\Namespace\Updater_Checker; // Use your namespace
 
-$github_username = 'your-github-username';
-$github_repository = 'your-repository-name';
+$github_username = 'your-github-username'; // Use your gitbub username
+$github_repository = 'your-repository-name'; // Use your repository name
 $plugin_basename = plugin_basename( __FILE__ ); // Check note below
-$plugin_current_version = '1.0.0';
+$plugin_current_version = '1.0.0'; // Use the current version of the plugin
 
 $updater = new Updater_Checker(
     $github_username,
