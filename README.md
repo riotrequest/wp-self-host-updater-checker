@@ -15,10 +15,32 @@ A lightweight PHP solution designed to work with the [WP Self-Host Updater Gener
 3. Init the class like the example below.
 
 ```php
-require_once 'path-to/class-updater-checker.php';
+require_once __DIR__ . '/path/to/class-updater-checker.php';
 
-$updater = new Updater_Checker();
-$updater->init();
+use Use\Your\Namespace\Updater_Checker;
+
+$github_username = 'your-github-username';
+$github_repository = 'your-repository-name';
+$plugin_basename = plugin_basename( __FILE__ ); // Example: my-plugin/my-plugin.php // Make sure this is in the root plugin file.
+$plugin_current_version = '1.0.0';
+
+$updater = new Updater_Checker(
+    $github_username,
+    $github_repository,
+    $plugin_basename,
+    $plugin_current_version
+);
+$updater->set_hooks();
+```
+
+### Important Note About `plugin_basename`
+
+The `plugin_basename(__FILE__)` function works correctly **only when used in the root file of your plugin**. If you call this function in a subfolder or include file, it may return an incorrect value, causing issues with plugin updates.
+
+So if you are including and instantiations the updater class in other folder that it not the root file use a manual declaration or any consant that may you was deinfed in the root file.
+
+```php
+$plugin_basename = 'my-plugin/my-plugin.php'; // Specify manually if necessary.
 ```
 
 ## Coming Soon
