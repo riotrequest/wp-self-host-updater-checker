@@ -21,7 +21,7 @@ use Use\Your\Namespace\Updater_Checker;
 
 $github_username = 'your-github-username';
 $github_repository = 'your-repository-name';
-$plugin_basename = plugin_basename( __FILE__ ); // Example: my-plugin/my-plugin.php // Make sure this is in the root plugin file.
+$plugin_basename = plugin_basename( __FILE__ ); // Check note below
 $plugin_current_version = '1.0.0';
 
 $updater = new Updater_Checker(
@@ -35,12 +35,21 @@ $updater->set_hooks();
 
 ### Important Note About `plugin_basename`
 
-The `plugin_basename(__FILE__)` function works correctly **only when used in the root file of your plugin**. If you call this function in a subfolder or include file, it may return an incorrect value, causing issues with plugin updates.
+The `plugin_basename(__FILE__)` function **works correctly only when used in the root file of your plugin**. If you call this function from a subfolder or an included file, it may return an incorrect value, potentially causing issues with plugin updates.
 
-So if you are including and instantiations the updater class in other folder that it not the root file use a manual declaration or any consant that may you was deinfed in the root file.
+If you are including and instantiating the updater class from a file located in a subfolder, you should manually define the basename or use a constant declared in the root file of your plugin.
 
 ```php
 $plugin_basename = 'my-plugin/my-plugin.php'; // Specify manually if necessary.
+```
+
+Example Using a Constant Defined in the Root File:
+```php
+// In your root plugin file (my-plugin.php):
+define( 'MY_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+
+// So in other files you can use
+$plugin_basename = MY_PLUGIN_BASENAME;
 ```
 
 ## Coming Soon
