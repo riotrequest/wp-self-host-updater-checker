@@ -1,6 +1,6 @@
 <?php
 
-namespace Use\Your\Namespace; // Change this to use your namespace
+namespace Use\Your\Namespace; // Change this to your namespace
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * to determine if updates are available and handles version comparisons.
  *
  * Key Features:
- * - Fetches update data from a self-hosted GitHub repository.
+ * - Fetches update data from a GitHub repository (public or private).
  * - Uses transients to cache update data, reducing redundant API calls.
  * - Integrates seamlessly with WordPress's native update process.
  */
@@ -90,22 +90,30 @@ class Updater_Checker {
 	protected string $cache_key;
 
 	/**
+	 * GitHub access token for private repositories.
+	 * Set this to your personal access token.
+	 */
+	protected ?string $github_access_token = null;
+
+	/**
 	 * Initializes the plugin update checker.
 	 *
 	 * The constructor sets up the required properties for the GitHub repository,
 	 * plugin information, and prepares the base URL and plugin directory name.
 	 *
-	 * @param string $github_username        The GitHub username or organization name where the repository is hosted.
-	 * @param string $github_repository      The name of the GitHub repository containing the plugin.
-	 * @param string $plugin_basename        The plugin's basename (e.g., 'plugin-slug/plugin-slug.php').
-	 * @param string $plugin_current_version The current version of the plugin (e.g., '1.0.0').
+	 * @param string      $github_username        The GitHub username or organization name where the repository is hosted.
+	 * @param string      $github_repository      The name of the GitHub repository containing the plugin.
+	 * @param string      $plugin_basename        The plugin's basename (e.g., 'plugin-slug/plugin-slug.php').
+	 * @param string      $plugin_current_version The current version of the plugin (e.g., '1.0.0').
+	 * @param string|null $github_access_token    Optional GitHub access token for private repositories.
 	 */
-	public function __construct( string $github_username, string $github_repository, string $plugin_basename, string $plugin_current_version ) {
-		$this->github_username = $github_username;
-		$this->github_repository = $github_repository;
-		$this->plugin_basename = $plugin_basename;
+	public function __construct( string $github_username, string $github_repository, string $plugin_basename, string $plugin_current_version, ?string $github_access_token = null ) {
+		$this->github_username        = $github_username;
+		$this->github_repository      = $github_repository;
+		$this->plugin_basename        = $plugin_basename;
 		$this->plugin_current_version = $plugin_current_version;
-		$this->already_forced = false;
+		$this->already_forced         = false;
+		$this->github_access_token    = $github_access_token;
 
 		$this->set_plugin_dirname();
 		$this->set_base_url();
@@ -152,22 +160,22 @@ class Updater_Checker {
 			return $result;
 		}
 
-		$result = new \stdClass();
-		$result->name = $metadata_from_server['name'] ?? '';
-		$result->slug = $metadata_from_server['slug'] ?? '';
-		$result->version = $metadata_from_server['version'] ?? '';
-		$result->tested = $metadata_from_server['tested'] ?? '';
-		$result->requires = $metadata_from_server['requires'] ?? '';
-		$result->author = $metadata_from_server['author'] ?? '';
-		$result->author_profile = $metadata_from_server['author_profile'] ?? '';
-		$result->download_link = $metadata_from_server['download_url'] ?? '';
-		$result->trunk = $metadata_from_server['download_url'] ?? '';
-		$result->requires_php = $metadata_from_server['requires_php'] ?? '';
-		$result->last_updated = $metadata_from_server['last_updated'] ?? '';
-		$result->sections = array(
-			'description' => $metadata_from_server['sections']['description'] ?? '',
-			'installation' => $metadata_from_server['sections']['installation'] ?? '',
-			'changelog' => $metadata_from_server['sections']['changelog'] ?? '',
+		$result                   = new \stdClass();
+		$result->name             = $metadata_from_server['name'] ?? '';
+		$result->slug             = $metadata_from_server['slug'] ?? '';
+		$result->version          = $metadata_from_server['version'] ?? '';
+		$result->tested           = $metadata_from_server['tested'] ?? '';
+		$result->requires         = $metadata_from_server['requires'] ?? '';
+		$result->author           = $metadata_from_server['author'] ?? '';
+		$result->author_profile   = $metadata_from_server['author_profile'] ?? '';
+		$result->download_link    = $metadata_from_server['download_url'] ?? '';
+		$result->trunk            = $metadata_from_server['download_url'] ?? '';
+		$result->requires_php     = $metadata_from_server['requires_php'] ?? '';
+		$result->last_updated     = $metadata_from_server['last_updated'] ?? '';
+		$result->sections         = array(
+			'description'    => $metadata_from_server['sections']['description'] ?? '',
+			'installation'   => $metadata_from_server['sections']['installation'] ?? '',
+			'changelog'      => $metadata_from_server['sections']['changelog'] ?? '',
 			'upgrade_notice' => $metadata_from_server['sections']['upgrade_notice'] ?? '',
 		);
 
@@ -201,14 +209,20 @@ class Updater_Checker {
 		}
 
 		if ( $data_from_server === false ) {
+			// Build headers with token support.
+			$headers = array(
+				'Accept'     => 'application/vnd.github.v3.raw',
+				'User-Agent' => 'WordPress-Request',
+			);
+			if ( ! empty( $this->github_access_token ) ) {
+				$headers['Authorization'] = 'token ' . $this->github_access_token;
+			}
+
 			$response = \wp_remote_get(
 				$this->repository_url,
 				array(
 					'timeout' => 30,
-					'headers' => array(
-						'Accept' => 'application/vnd.github.v3.raw',
-						'User-Agent' => 'WordPress-Request',
-					),
+					'headers' => $headers,
 				)
 			);
 
@@ -258,7 +272,7 @@ class Updater_Checker {
 		if ( version_compare( $this->plugin_current_version, $metadata_from_server['version'], '<' ) ) {
 			$transient->response[ $this->plugin_basename ] = $update_data;
 		} elseif ( isset( $transient->no_update ) ) {
-				$transient->no_update[ $this->plugin_basename ] = $update_data;
+			$transient->no_update[ $this->plugin_basename ] = $update_data;
 		}
 
 		return $transient;
